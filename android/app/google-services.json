@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "624332125006",
+    "project_id": "mf-central-kitchen",
+    "storage_bucket": "mf-central-kitchen.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:624332125006:android:36b91557f95579d8b0a41f",
+        "android_client_info": {
+          "package_name": "com.mfapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAI3AuP5VemaJKnLx3Onrf9EMw7n1izwN8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
