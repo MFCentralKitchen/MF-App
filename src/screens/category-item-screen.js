@@ -57,17 +57,17 @@ const CategoryItemsScreen = ({route}) => {
 
   // Handle item quantity change (increase or decrease)
   const handleQuantityChange = async (item, action) => {
-    const currentQuantity = reduxItems[item.id]?.quantity || 0; // Get current quantity from cart
+    const currentQuantity = reduxItems[item.id]?.quantity || 0; // Current quantity from Redux cart
     const availableQuantity = item.availableQuantity; // Available quantity from item data
     let newQuantity = action === 'increase' ? currentQuantity + 1 : currentQuantity - 1;
-
-    if (newQuantity > availableQuantity) {
+  
+    if (availableQuantity==0) {
       Alert.alert('Exceeded Quantity', 'You cannot add more than available quantity.');
       return;
     } else if (newQuantity < 0) {
       newQuantity = 0;
     }
-
+  
     // Update Firestore DB for inventory
     try {
       const updatedAvailableQuantity = availableQuantity - (newQuantity - currentQuantity);
@@ -75,28 +75,29 @@ const CategoryItemsScreen = ({route}) => {
       await firestore().collection('inventoryItems').doc(item.refId).update({
         availableQuantity: updatedAvailableQuantity,
       });
-
+  
       // Update local state for UI
       setItems(prevItems =>
         prevItems.map(i => (i.id === item.id ? {...i, availableQuantity: updatedAvailableQuantity} : i)),
       );
-
+  
       // Update cart in Redux
       if (newQuantity === 0) {
         dispatch(removeItemFromCart(item.id));
       } else {
-        dispatch(addItemToCart({...item, quantity: newQuantity}));
+        dispatch(addItemToCart({...item, quantity: newQuantity, availableQuantity: updatedAvailableQuantity}));
       }
-
+  
       // Sync cart with Firestore
-      const updatedCart = { ...reduxItems, [item.id]: { ...item, quantity: newQuantity }};
+      const updatedCart = { ...reduxItems, [item.id]: { ...item, quantity: newQuantity, availableQuantity: updatedAvailableQuantity }};
       updateFirestoreCart(updatedCart);
-
+  
     } catch (error) {
       console.error('Error updating item:', error);
       alert('Failed to update quantity. Please try again.');
     }
   };
+  
 
   // Render each item in the category
   const renderItem = ({ item }) => {

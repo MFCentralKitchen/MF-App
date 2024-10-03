@@ -40,7 +40,7 @@ const MainTabNavigator = () => {
       <Tab.Screen
         name="Order History"
         component={OrderHistoryScreen}
-        options={{ headerTitleAlign: 'center' }}
+        options={{ headerTitleAlign: 'center' ,headerShown : false}}
       />
     </Tab.Navigator>
   );

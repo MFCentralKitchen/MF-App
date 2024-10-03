@@ -2,14 +2,15 @@ import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet, FlatList, TouchableOpacity, Alert} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {firestore} from '../firebase-config'; 
-import {addItemToCart, removeItemFromCart} from '../features/cart-slice';
+import {addItemToCart, removeItemFromCart, setCartData} from '../features/cart-slice';
 
 const CartScreen = () => {
   const dispatch = useDispatch();
   const {reduxItems} = useSelector(state => state.cart); // Redux cart state
+  const {user} = useSelector(state => state.user)
   const [cartItems, setCartItems] = useState([]);
   const userId = 'some-user-id'; // Replace this with actual user id (from auth)
-
+console.log(cartItems)
   // Load cart from Firestore when the component mounts
   useEffect(() => {
     const loadCartFromFirestore = async () => {
@@ -128,26 +129,56 @@ const CartScreen = () => {
   };
 
   // Place order and update Firestore
-  const placeOrder = async () => {
-    try {
-      const orderData = {
-        items: cartItems,
-        totalCost: cartItems.reduce((total, item) => total + item.price * item.quantity, 0),
-        createdAt: new Date(),
-      };
 
-      await firestore().collection('orders').add(orderData);
+const placeOrder = async () => {
 
-      Alert.alert('Order Success', 'Your order has been placed successfully.');
-      dispatch({type: 'CLEAR_CART'}); // Clear Redux cart
-      updateFirestoreCart({}); // Clear Firestore cart
+  if (cartItems.length == 0) {
+    Alert.alert('Error', 'Your cart is empty. Add items before placing an order.');
+    return;
+  }
+  try {
+    // Calculate the total price (quantity * price for each item)
+    const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-      setCartItems([]); // Clear local cart state
-    } catch (error) {
-      console.error('Error placing order:', error);
-      alert('Failed to place order. Please try again.');
-    }
-  };
+    const invoiceData = {
+      userId: user.id,
+      createdAt: new Date().toISOString(),
+      name: user.name,
+      restaurantName: user.restaurantName,
+      email: user.email,
+      phone: user.phone,
+      address: user.address,
+      items: cartItems.map(item => ({
+        title: item.title,
+        brand: item.brand,
+        price: item.price,
+        quantity: item.quantity,
+        units: item.units
+      })),
+      orderStatus: 'pending', // Default order status
+      deliveryCharges: 0, // Default to 0, modify if needed
+      tax: 0, // Default to 0, modify if needed
+      totalPrice: totalPrice, // Calculated total price
+    };
+
+    // Add the invoice data to the Firestore `invoices` collection
+    await firestore().collection('invoices').add(invoiceData);
+
+    // Show success message
+    Alert.alert('Order Success', 'Your order has been placed successfully.');
+
+    // Clear the cart in Redux and Firestore
+    dispatch(setCartData({})); // Clear Redux cart
+    updateFirestoreCart({}); // Clear Firestore cart if using sync
+
+    setCartItems([]); // Clear local cart state if necessary
+
+  } catch (error) {
+    console.error('Error placing order:', error);
+    Alert.alert('Error', 'Failed to place order. Please try again.');
+  }
+};
+
 
   const renderItem = ({item}) => {
     const currentQuantity = reduxItems[item.id]?.quantity || 0;
