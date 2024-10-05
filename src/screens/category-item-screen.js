@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
     marginVertical: 5,
-    backgroundColor: 'white',
+    backgroundColor: '#FFF8E1',
     borderRadius: 10,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},

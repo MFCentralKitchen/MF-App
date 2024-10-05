@@ -1,75 +1,120 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
-import { useSelector } from 'react-redux';
+import {useSelector} from 'react-redux';
 
 const OrderHistoryScreen = () => {
-  const { user } = useSelector(state => state.user); // Get user details from Redux
+  const {user} = useSelector(state => state.user); // Get user details from Redux
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const ordersSnapshot = await firestore()
-          .collection('invoices')
-          .where('userId', '==', user.id)
-          .get();
-
-        const userOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Create a real-time listener to fetch orders
+    const unsubscribe = firestore()
+      .collection('invoices')
+      .where('userId', '==', user.id)
+      .onSnapshot((ordersSnapshot) => {
+        const userOrders = ordersSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
         setOrders(userOrders);
-      } catch (error) {
+      }, (error) => {
         console.error('Error fetching orders:', error);
-      }
-    };
+      });
 
-    fetchOrders();
+    // Cleanup function to unsubscribe from listener on component unmount
+    return () => unsubscribe();
   }, [user.id]);
 
-  const renderOrderItem = ({ item }) => (
+  const renderOrderItem = ({item}) => (
     <View style={styles.orderCard}>
       <View style={styles.orderInfo}>
         <Text style={styles.orderText}>Order ID: #{item.id}</Text>
-        <Text style={styles.orderText}>Order Status: {item.orderStatus}</Text>
-        <Text style={styles.orderText}>Payment Status: {item.paymentStatus || 'Pending'}</Text>
+        <View style={{flexDirection:'row',marginTop:5}}>
+        <Text style={styles.orderText}>
+          Order Status:
+
+        </Text>
+          <View
+            style={[
+              styles.statusValue,
+              item.orderStatus === 'pending'
+                ? styles.pendingStatus
+                : item.orderStatus === 'accepted'
+                ? styles.acceptedStatus
+                : item.orderStatus === 'shipped'
+                ? styles.shippedStatus
+                : item.orderStatus === 'delivered'
+                ? styles.deliveredStatus
+                : styles.defaultStatus,
+            ]}>
+            <Text style={styles.statusText}>
+              {item.orderStatus.charAt(0).toUpperCase() + item.orderStatus.slice(1)}{' '}
+            </Text>
+          </View>
+        </View>
+        <View style={{flexDirection:'row',marginTop:5}}>
+        <Text style={styles.orderText}>
+          Payment Status:
+          </Text>
+          <View
+            style={[
+              styles.statusValue,
+              item.isBillPaid 
+                ? styles.paidStatus
+                : styles.paymentPendingStatus,
+            ]}>
+            <Text style={styles.statusText}>
+              {item.isBillPaid ? 'Paid' : 'Pending'}
+            </Text>
+          </View>
+          </View>
       </View>
       <TouchableOpacity
         style={styles.viewButton}
         onPress={() => {
           setSelectedOrder(item);
           setModalVisible(true);
-        }}
-      >
+        }}>
         <Text style={styles.viewButtonText}>View</Text>
       </TouchableOpacity>
     </View>
   );
+  
 
   const renderOrderItems = () => (
     <View style={styles.modalContent}>
       <Text style={styles.modalTitle}>Order Details</Text>
       <View style={styles.tableHeader}>
-        <Text style={[styles.tableHeaderText,{width: '50%'}]}>Title</Text>
-        <Text style={[styles.tableHeaderText,{width: '25%'}]}>Brand</Text>
-        <Text style={[styles.tableHeaderText,{width: '25%'}]}>Quantity</Text>
+        <Text style={[styles.tableHeaderText, {width: '50%'}]}>Title</Text>
+        <Text style={[styles.tableHeaderText, {width: '25%'}]}>Brand</Text>
+        <Text style={[styles.tableHeaderText, {width: '25%'}]}>Quantity</Text>
       </View>
       {selectedOrder.items.map((item, index) => (
         <View key={index} style={styles.tableRow}>
-          <Text style={[styles.tableCell,{width: '50%'}]}>{item.title}</Text>
-          <Text style={[styles.tableCell,{width: '25%'}]}>{item.brand}</Text>
-          <Text style={[styles.tableCell,{width: '25%'}]}>{item.quantity}</Text>
+          <Text style={[styles.tableCell, {width: '50%'}]}>{item.title}</Text>
+          <Text style={[styles.tableCell, {width: '25%'}]}>{item.brand}</Text>
+          <Text style={[styles.tableCell, {width: '25%'}]}>
+            {item.quantity}
+          </Text>
         </View>
       ))}
       <TouchableOpacity
         style={styles.closeButton}
-        onPress={() => setModalVisible(false)}
-      >
+        onPress={() => setModalVisible(false)}>
         <Text style={styles.closeButtonText}>Close</Text>
       </TouchableOpacity>
     </View>
   );
-
   return (
     <View style={styles.container}>
       <Text style={styles.headerText}>Order History</Text>
@@ -84,8 +129,7 @@ const OrderHistoryScreen = () => {
           visible={modalVisible}
           animationType="slide"
           transparent={true}
-          onRequestClose={() => setModalVisible(false)}
-        >
+          onRequestClose={() => setModalVisible(false)}>
           <View style={styles.modalContainer}>{renderOrderItems()}</View>
         </Modal>
       )}
@@ -123,8 +167,10 @@ const styles = StyleSheet.create({
   },
   orderText: {
     fontSize: 16,
-    color: '#D32F2F', // Red text color
+    color: 'black', // Red text color
     marginBottom: 5,
+    marginTop:5,
+    fontWeight:'bold'
   },
   viewButton: {
     backgroundColor: '#D32F2F', // Red button color
@@ -163,7 +209,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#D32F2F',
-    textAlign:'center'
+    textAlign: 'center',
   },
   tableRow: {
     flexDirection: 'row',
@@ -173,7 +219,7 @@ const styles = StyleSheet.create({
   tableCell: {
     fontSize: 16,
     color: '#333',
-    textAlign:'center'
+    textAlign: 'center',
   },
   closeButton: {
     backgroundColor: '#D32F2F',
@@ -186,6 +232,47 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
   },
+  statusValue: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 5,
+    marginLeft: 7,
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  pendingStatus: {
+    backgroundColor: '#FFC107', // Yellow background for pending
+    color: '#fff', // White text color
+  },
+  acceptedStatus: {
+    backgroundColor: '#2196F3', // Blue background for accepted
+    color: '#fff', // White text color
+  },
+  shippedStatus: {
+    backgroundColor: '#FF9800', // Orange background for shipped
+    color: '#fff', // White text color
+  },
+  deliveredStatus: {
+    backgroundColor: '#4CAF50', // Green background for delivered
+    color: '#fff', // White text color
+  },
+  defaultStatus: {
+    backgroundColor: '#9E9E9E', // Gray background for other statuses
+    color: '#fff', // White text color
+  },
+  paidStatus: {
+    backgroundColor: '#4CAF50', // Green background for paid
+    color: '#fff', // White text color
+  },
+  paymentPendingStatus: {
+    backgroundColor: '#FFC107', // Yellow background for payment pending
+    color: '#fff', // White text color
+  },
+  statusText: {
+    color: '#fff', // White text color
+    fontWeight: 'bold',
+    textAlign: 'center',
+  }
 });
 
 export default OrderHistoryScreen;

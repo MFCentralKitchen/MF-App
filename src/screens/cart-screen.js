@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, FlatList, TouchableOpacity, Alert} from 'react-native';
+import {View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Image} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {firestore} from '../firebase-config'; 
 import {addItemToCart, removeItemFromCart, setCartData} from '../features/cart-slice';
+import Trash from '../assets/Trashcan.png'
 
 const CartScreen = () => {
   const dispatch = useDispatch();
@@ -208,7 +209,8 @@ const placeOrder = async () => {
         <TouchableOpacity
           style={styles.removeButton}
           onPress={() => removeFromCart(item)}>
-          <Text style={styles.removeButtonText}>x</Text>
+          {/* <Text style={styles.removeButtonText}>x</Text> */}
+          <Image source={Trash} style={{width:25,height:25}} />
         </TouchableOpacity>
       </View>
     );
@@ -218,14 +220,21 @@ const placeOrder = async () => {
     <View style={styles.container}>
       <FlatList
         data={cartItems}
-        renderItem={renderItem}
+        renderItem={renderItem} // Passing the renderItem function
         keyExtractor={item => item.id}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyCartContainer}>
+            <Text style={styles.emptyCartText}>No item in the cart</Text>
+          </View>
+        )} // Handling empty cart scenario
         ListFooterComponent={() => (
-          <TouchableOpacity
-            style={styles.placeOrderButton}
-            onPress={placeOrder}>
-            <Text style={styles.placeOrderButtonText}>Place Order</Text>
-          </TouchableOpacity>
+          cartItems.length > 0 && ( // Only show Place Order button if there are items
+            <TouchableOpacity
+              style={styles.placeOrderButton}
+              onPress={placeOrder}>
+              <Text style={styles.placeOrderButtonText}>Place Order</Text>
+            </TouchableOpacity>
+          )
         )}
       />
     </View>
@@ -241,7 +250,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 15,
-    backgroundColor: 'white',
+    backgroundColor: '#FFF8E1',
     borderRadius: 10,
     marginVertical: 5,
     shadowColor: '#000',
@@ -281,9 +290,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   removeButton: {
-    backgroundColor: 'red',
+    // backgroundColor: 'red',
     padding: 5,
     borderRadius: 5,
+    alignSelf:'center'
   },
   removeButtonText: {
     color: 'white',
@@ -297,9 +307,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   placeOrderButtonText: {
-    color: 'white',
+    color: '#FFF8E1',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  emptyCartContainer: {
+    marginTop: 50,
+    alignItems: 'center',
+  },
+  emptyCartText: {
+    fontSize: 18,
+    color: 'black',
   },
 });
 
