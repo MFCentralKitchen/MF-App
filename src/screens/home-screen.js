@@ -3,17 +3,18 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react
 import { firestore } from '../firebase-config'; // Use your Firestore config
 import Icon from 'react-native-vector-icons/Fontisto';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setCartData } from '../features/cart-slice';
 
 const HomeScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [categories, setCategories] = useState([]);
+  const {user} = useSelector(state => state.user)
 
   // Load cart data from Firestore
   const loadCartData = async () => {
-    const userId = 'some-user-id'; // Replace with actual user ID
+    const userId = user.id; // Replace with actual user ID
 
     try {
       const userCartRef = firestore().collection('userCart').doc(userId);

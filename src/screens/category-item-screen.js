@@ -17,9 +17,10 @@ const CategoryItemsScreen = ({route}) => {
   const {categoryId} = route.params;
   const [items, setItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const {user} = useSelector(state => state.user)
   const {reduxItems} = useSelector(state => state.cart); // Redux cart state
   const dispatch = useDispatch();
-  const userId = 'some-user-id'; // Replace with the actual user ID from authentication
+  const userId = user.id; // Replace with the actual user ID from authentication
   const [toastVisible, setToastVisible] = useState(false); // Toast visibility state
   const [toastMessage, setToastMessage] = useState(''); // Toast message state
 

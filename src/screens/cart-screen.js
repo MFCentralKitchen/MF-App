@@ -10,7 +10,7 @@ const CartScreen = () => {
   const {reduxItems} = useSelector(state => state.cart); // Redux cart state
   const {user} = useSelector(state => state.user)
   const [cartItems, setCartItems] = useState([]);
-  const userId = 'some-user-id'; // Replace this with actual user id (from auth)
+  const userId = user.id; // Replace this with actual user id (from auth)
 console.log(cartItems)
   // Load cart from Firestore when the component mounts
   useEffect(() => {
@@ -190,6 +190,7 @@ const placeOrder = async () => {
           <Text style={styles.itemText}>{item.title}</Text>
           <Text style={styles.itemSubText}>Brand: {item.brand}</Text>
           <Text style={styles.itemSubText}>Quantity: {currentQuantity}</Text>
+          <Text style={styles.itemSubText}>Units: {item.units}</Text>
         </View>
         
         <View style={styles.quantityControls}>

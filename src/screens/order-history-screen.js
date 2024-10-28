@@ -95,15 +95,17 @@ const OrderHistoryScreen = () => {
     <View style={styles.modalContent}>
       <Text style={styles.modalTitle}>Order Details</Text>
       <View style={styles.tableHeader}>
-        <Text style={[styles.tableHeaderText, {width: '50%'}]}>Title</Text>
-        <Text style={[styles.tableHeaderText, {width: '25%'}]}>Brand</Text>
-        <Text style={[styles.tableHeaderText, {width: '25%'}]}>Quantity</Text>
+        <Text style={[styles.tableHeaderText, {width: '40%'}]}>Title</Text>
+        <Text style={[styles.tableHeaderText, {width: '20%'}]}>Brand</Text>
+        <Text style={[styles.tableHeaderText, {width: '17%'}]}>Units</Text>
+        <Text style={[styles.tableHeaderText, {width: '22%'}]}>Quantity</Text>
       </View>
       {selectedOrder.items.map((item, index) => (
         <View key={index} style={styles.tableRow}>
-          <Text style={[styles.tableCell, {width: '50%'}]}>{item.title}</Text>
-          <Text style={[styles.tableCell, {width: '25%'}]}>{item.brand}</Text>
-          <Text style={[styles.tableCell, {width: '25%'}]}>
+          <Text style={[styles.tableCell, {width: '40%'}]}>{item.title}</Text>
+          <Text style={[styles.tableCell, {width: '20%'}]}>{item.brand}</Text>
+          <Text style={[styles.tableCell, {width: '17%'}]}>{item.units}</Text>
+          <Text style={[styles.tableCell, {width: '22%'}]}>
             {item.quantity}
           </Text>
         </View>

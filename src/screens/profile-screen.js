@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setCartData } from '../features/cart-slice';
 
 const ProfileScreen = () => {
   const { user } = useSelector(state => state.user); // Get logged-in user details from Redux
@@ -18,6 +19,7 @@ const ProfileScreen = () => {
           try {
             // Clear Redux state
             dispatch({ type: 'CLEAR_USER' });
+            dispatch(setCartData({}))
 
             // Clear AsyncStorage (local storage)
             await AsyncStorage.removeItem('user');
