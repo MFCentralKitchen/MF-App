@@ -69,40 +69,58 @@ const CategoryItemsScreen = ({route}) => {
   const handleQuantityChange = async (item, action) => {
     const currentQuantity = reduxItems[item.id]?.quantity || 0; // Current quantity from Redux cart
     const availableQuantity = item.availableQuantity; // Available quantity from item data
+    const soldQuantity = item.soldQuantity || 0; // Sold quantity from item data
+  
     let newQuantity = action === 'increase' ? currentQuantity + 1 : currentQuantity - 1;
-
-    if (availableQuantity == 0) {
+  
+    // Prevent invalid quantities
+    if (newQuantity > availableQuantity) {
       Alert.alert('Exceeded Quantity', 'You cannot add more than available quantity.');
       return;
     } else if (newQuantity < 0) {
       newQuantity = 0;
     }
-
-    // Update Firestore DB for inventory
+  
     try {
+      // Calculate updated quantities
       const updatedAvailableQuantity = availableQuantity - (newQuantity - currentQuantity);
-
+      const updatedSoldQuantity = soldQuantity + (newQuantity - currentQuantity);
+  
+      // Update Firestore DB for inventory
       await firestore().collection('inventoryItems').doc(item.refId).update({
         availableQuantity: updatedAvailableQuantity,
+        soldQuantity: updatedSoldQuantity,
       });
-
+  
       // Update local state for UI
       setItems(prevItems =>
-        prevItems.map(i => (i.id === item.id ? {...i, availableQuantity: updatedAvailableQuantity} : i)),
+        prevItems.map(i =>
+          i.id === item.id
+            ? { ...i, availableQuantity: updatedAvailableQuantity, soldQuantity: updatedSoldQuantity }
+            : i
+        ),
       );
-
-      // Update cart in Redux
+  
+      // Update Redux cart
       if (newQuantity === 0) {
         dispatch(removeItemFromCart(item.id));
       } else {
-        dispatch(addItemToCart({...item, quantity: newQuantity, availableQuantity: updatedAvailableQuantity}));
+        dispatch(addItemToCart({ ...item, quantity: newQuantity, availableQuantity: updatedAvailableQuantity }));
       }
-
+  
       // Sync cart with Firestore
-      const updatedCart = {...reduxItems, [item.id]: {...item, quantity: newQuantity, availableQuantity: updatedAvailableQuantity}};
+      const updatedCart = {
+        ...reduxItems,
+        [item.id]: {
+          ...item,
+          quantity: newQuantity,
+          availableQuantity: updatedAvailableQuantity,
+          soldQuantity: updatedSoldQuantity,
+        },
+      };
       updateFirestoreCart(updatedCart);
-
-      // Show success toast if it's the first time adding the item
+  
+      // Show toast message for first-time addition
       if (newQuantity === 1 && action === 'increase') {
         setToastMessage('Item added successfully to the cart!');
         setToastVisible(true);
@@ -110,12 +128,12 @@ const CategoryItemsScreen = ({route}) => {
           setToastVisible(false);
         }, 3000); // Hide toast after 3 seconds
       }
-
     } catch (error) {
       console.error('Error updating item:', error);
       alert('Failed to update quantity. Please try again.');
     }
   };
+  
 
   // Render each item in the category
   const renderItem = ({item}) => {

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import {useSelector} from 'react-redux';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const OrderHistoryScreen = () => {
   const {user} = useSelector(state => state.user); // Get user details from Redux
@@ -92,7 +93,7 @@ const OrderHistoryScreen = () => {
   
 
   const renderOrderItems = () => (
-    <View style={styles.modalContent}>
+    <ScrollView style={styles.modalContent}>
       <Text style={styles.modalTitle}>Order Details</Text>
       <View style={styles.tableHeader}>
         <Text style={[styles.tableHeaderText, {width: '40%'}]}>Title</Text>
@@ -115,7 +116,7 @@ const OrderHistoryScreen = () => {
         onPress={() => setModalVisible(false)}>
         <Text style={styles.closeButtonText}>Close</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
   return (
     <View style={styles.container}>
@@ -228,6 +229,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginTop: 20,
+    marginBottom:30,
   },
   closeButtonText: {
     color: '#fff',
