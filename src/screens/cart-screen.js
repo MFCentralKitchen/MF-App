@@ -1,15 +1,17 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Image} from 'react-native';
+import {View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Image, ActivityIndicator} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {firestore} from '../firebase-config'; 
 import {addItemToCart, removeItemFromCart, setCartData} from '../features/cart-slice';
 import Trash from '../assets/Trashcan.png'
+import NetInfo from '@react-native-community/netinfo';
 
 const CartScreen = () => {
   const dispatch = useDispatch();
   const {reduxItems} = useSelector(state => state.cart); // Redux cart state
   const {user} = useSelector(state => state.user)
   const [cartItems, setCartItems] = useState([]);
+  const [placeOrderClicked,setPlaceOrderClicked] = useState(false)
   const userId = user.id; // Replace this with actual user id (from auth)
 console.log(cartItems)
   // Load cart from Firestore when the component mounts
@@ -153,54 +155,66 @@ console.log(cartItems)
 
   // Place order and update Firestore
 
-const placeOrder = async () => {
-
-  if (cartItems.length == 0) {
-    Alert.alert('Error', 'Your cart is empty. Add items before placing an order.');
-    return;
-  }
-  try {
-    // Calculate the total price (quantity * price for each item)
-    const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-
-    const invoiceData = {
-      userId: user.id,
-      createdAt: new Date().toISOString(),
-      name: user.name,
-      restaurantName: user.restaurantName,
-      email: user.email,
-      phone: user.phone,
-      address: user.address,
-      items: cartItems.map(item => ({
-        title: item.title,
-        brand: item.brand,
-        price: item.price,
-        quantity: item.quantity,
-        units: item.units
-      })),
-      orderStatus: 'pending', // Default order status
-      deliveryCharges: 0, // Default to 0, modify if needed
-      tax: 0, // Default to 0, modify if needed
-      totalPrice: totalPrice, // Calculated total price
-    };
-
-    // Add the invoice data to the Firestore `invoices` collection
-    await firestore().collection('invoices').add(invoiceData);
-
-    // Show success message
-    Alert.alert('Order Success', 'Your order has been placed successfully.');
-
-    // Clear the cart in Redux and Firestore
-    dispatch(setCartData({})); // Clear Redux cart
-    updateFirestoreCart({}); // Clear Firestore cart if using sync
-
-    setCartItems([]); // Clear local cart state if necessary
-
-  } catch (error) {
-    console.error('Error placing order:', error);
-    Alert.alert('Error', 'Failed to place order. Please try again.');
-  }
-};
+  const placeOrder = async () => {
+    // Check for network connection
+    setPlaceOrderClicked(true)
+    const state = await NetInfo.fetch();
+    if (!state.isConnected) {
+      setPlaceOrderClicked(false)
+      Alert.alert('Error', 'No network connection. Please check your internet and try again.');
+      return;
+    }
+  
+    if (cartItems.length == 0) {
+      setPlaceOrderClicked(false)
+      Alert.alert('Error', 'Your cart is empty. Add items before placing an order.');
+      return;
+    }
+  
+    try {
+      // Calculate the total price (quantity * price for each item)
+      const totalPrice = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  
+      const invoiceData = {
+        userId: user.id,
+        createdAt: new Date().toISOString(),
+        name: user.name,
+        restaurantName: user.restaurantName,
+        email: user.email,
+        phone: user.phone,
+        address: user.address,
+        items: cartItems.map(item => ({
+          title: item.title,
+          brand: item.brand,
+          price: item.price,
+          quantity: item.quantity,
+          units: item.units
+        })),
+        orderStatus: 'pending', // Default order status
+        deliveryCharges: 0, // Default to 0, modify if needed
+        tax: 0, // Default to 0, modify if needed
+        totalPrice: totalPrice, // Calculated total price
+      };
+  
+      // Add the invoice data to the Firestore `invoices` collection
+      await firestore().collection('invoices').add(invoiceData);
+  
+      // Show success message
+      Alert.alert('Order Success', 'Your order has been placed successfully.');
+  
+      // Clear the cart in Redux and Firestore
+      dispatch(setCartData({})); // Clear Redux cart
+      updateFirestoreCart({}); // Clear Firestore cart if using sync
+  
+      setCartItems([]); // Clear local cart state if necessary
+      setPlaceOrderClicked(false)
+  
+    } catch (error) {
+      console.error('Error placing order:', error);
+      setPlaceOrderClicked(false)
+      Alert.alert('Error', 'Failed to place order. Please try again.');
+    }
+  };
 
 
   const renderItem = ({item}) => {
@@ -253,9 +267,13 @@ const placeOrder = async () => {
         ListFooterComponent={() => (
           cartItems.length > 0 && ( // Only show Place Order button if there are items
             <TouchableOpacity
-              style={styles.placeOrderButton}
-              onPress={placeOrder}>
-              <Text style={styles.placeOrderButtonText}>Place Order</Text>
+              style={[styles.placeOrderButton,{backgroundColor:placeOrderClicked ? '#E0E0E0' : 'green'}]}
+              onPress={placeOrder}
+              disabled={placeOrderClicked}>
+                <View style={{flexDirection:'row'}}>
+                {placeOrderClicked && <ActivityIndicator size={24} color={'black'} style={{marginRight:20}}/>}
+                <Text style={[styles.placeOrderButtonText,{color:placeOrderClicked ? 'black' : 'white'}]}>Place Order</Text>
+                </View>
             </TouchableOpacity>
           )
         )}
